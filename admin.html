@@ -111,7 +111,7 @@
       usuarios.forEach(u => {
         const li = document.createElement('li');
         const criado = new Date(u.criado_em).toLocaleString('pt-BR');
-        const status = u.ativo == 1 || u.ativo === true ? '✅ Ativo' : '❌ Inativo';
+        const status = u.ativo ? '✅ Ativo' : '❌ Inativo';
 
         li.innerHTML = `
           <div>
@@ -121,7 +121,7 @@
           </div>
           <div class="actions">
             <button onclick="editar(${u.id}, '${u.nome}', '${u.email}', ${u.ativo})">Editar</button>
-            ${u.ativo == 1 || u.ativo === true
+            ${u.ativo
               ? `<button class="delete" onclick="excluir(${u.id})">Desativar</button>`
               : `<button onclick="reativar(${u.id})">Reativar</button>`
             }
