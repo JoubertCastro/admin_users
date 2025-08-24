@@ -2,91 +2,133 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Gestão de Usuários</title>
+  <title>Painel de Administração Moderno</title>
   <style>
+    /* Reset básico */
+    * { margin:0; padding:0; box-sizing:border-box; }
+
     body {
-      font-family: Arial, sans-serif;
-      background: #f5f6fa;
-      margin: 0;
-      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f0f2f5;
+      color: #333;
     }
+
     header {
-      background: #273c75;
+      background: #1e90ff;
       color: white;
-      padding: 15px;
-      text-align: center;
-    }
-    main {
-      max-width: 800px;
-      margin: 20px auto;
-      background: white;
       padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      text-align: center;
+      font-size: 1.8em;
+      font-weight: bold;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
+
+    main {
+      max-width: 900px;
+      margin: 30px auto;
+      padding: 20px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    }
+
     h2 {
-      margin-top: 0;
+      margin-bottom: 15px;
+      color: #1e90ff;
     }
+
     form {
-      margin-bottom: 20px;
+      display: grid;
+      gap: 10px;
+      margin-bottom: 30px;
     }
-    label {
-      display: block;
-      margin: 8px 0 4px;
+
+    input {
+      padding: 10px;
+      font-size: 1em;
+      border: 1px solid #ccc;
+      border-radius: 5px;
     }
-    input, button {
-      padding: 8px;
-      margin-bottom: 10px;
-      width: 100%;
-      box-sizing: border-box;
-    }
+
     button {
-      background: #44bd32;
-      color: white;
+      padding: 10px;
+      font-size: 1em;
       border: none;
-      border-radius: 4px;
+      border-radius: 5px;
       cursor: pointer;
+      transition: 0.3s;
     }
-    button.delete {
-      background: #e84118;
+
+    button.submit-btn {
+      background: #1e90ff;
+      color: white;
     }
+
+    button.submit-btn:hover { background: #0066cc; }
+
     ul {
       list-style: none;
-      padding: 0;
     }
+
     li {
-      background: #f9f9f9;
-      margin: 10px 0;
-      padding: 15px;
-      border-radius: 6px;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      background: #f9f9f9;
+      margin-bottom: 12px;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      flex-wrap: wrap;
     }
-    li div {
-      max-width: 70%;
+
+    .user-info {
+      max-width: 65%;
     }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.85em;
+      font-weight: bold;
+      color: white;
+    }
+
+    .ativo { background: #28a745; }
+    .inativo { background: #dc3545; }
+
     .actions button {
-      margin-left: 5px;
-      width: auto;
+      margin-left: 8px;
+      padding: 6px 12px;
+      font-size: 0.9em;
+    }
+
+    .actions button.edit { background: #ffc107; color: #333; }
+    .actions button.edit:hover { background: #e0a800; }
+
+    .actions button.delete { background: #dc3545; color: white; }
+    .actions button.delete:hover { background: #c82333; }
+
+    .actions button.reactivate { background: #28a745; color: white; }
+    .actions button.reactivate:hover { background: #218838; }
+
+    @media(max-width: 600px){
+      .user-info { max-width: 100%; margin-bottom: 10px; }
+      li { flex-direction: column; align-items: flex-start; }
     }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Gestão de Usuários</h1>
-  </header>
+  <header>Painel de Administração</header>
   <main>
     <h2>Novo Usuário</h2>
     <form id="form">
       <input type="hidden" id="id">
-      <label for="nome">Nome</label>
-      <input type="text" id="nome" required>
-      <label for="email">Email</label>
-      <input type="email" id="email" required>
-      <label for="senha">Senha</label>
-      <input type="password" id="senha" required>
-      <button type="submit">Salvar</button>
+      <input type="text" id="nome" placeholder="Nome" required>
+      <input type="email" id="email" placeholder="Email" required>
+      <input type="password" id="senha" placeholder="Senha">
+      <button type="submit" class="submit-btn">Salvar</button>
     </form>
 
     <h2>Usuários</h2>
@@ -94,7 +136,7 @@
   </main>
 
   <script>
-    const API_BASE = "https://whatsapp-webhook-production-9a27.up.railway.app"; // ajuste se necessário
+    const API_BASE = "https://whatsapp-webhook-production-9a27.up.railway.app";
     const form = document.getElementById('form');
     const lista = document.getElementById('lista');
 
@@ -105,21 +147,22 @@
 
       usuarios.forEach(u => {
         const criado = new Date(u.criado_em).toLocaleString('pt-BR');
-        const ativo = (u.ativo === true || u.ativo === 1 || u.ativo === "true"); // conversão segura
-        const status = ativo ? '✅ Ativo' : '❌ Inativo';
+        const ativo = (u.ativo === true || u.ativo === 1 || u.ativo === "true" || u.ativo === "t" || u.ativo === "T");
+        const statusText = ativo ? 'Ativo' : 'Inativo';
+        const statusClass = ativo ? 'ativo' : 'inativo';
 
         const li = document.createElement('li');
         li.innerHTML = `
-          <div>
+          <div class="user-info">
             <strong>${u.nome}</strong> (${u.email})<br/>
-            <small>Criado em: ${criado}</small><br/>
-            <small>Status: ${status}</small>
+            <small>Criado em: ${criado}</small>
           </div>
+          <span class="badge ${statusClass}">${statusText}</span>
           <div class="actions">
-            <button onclick="editar(${u.id}, '${u.nome}', '${u.email}', ${ativo})">Editar</button>
+            <button class="edit" onclick="editar(${u.id}, '${u.nome}', '${u.email}', ${ativo})">Editar</button>
             ${ativo
-              ? `<button class="delete" onclick="excluir(${u.id})">Desativar</button>`
-              : `<button onclick="reativar(${u.id})">Reativar</button>`
+              ? `<button class="delete" onclick="excluir(${u.id}, '${u.nome}', '${u.email}')">Desativar</button>`
+              : `<button class="reactivate" onclick="reativar(${u.id}, '${u.nome}', '${u.email}')">Reativar</button>`
             }
           </div>
         `;
@@ -127,79 +170,68 @@
       });
     }
 
-    async function excluir(id) {
-      if (!confirm("Deseja desativar este usuário?")) return;
-
-      try {
-        const res = await fetch(`${API_BASE}/api/usuarios/${id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ativo: false })
-        });
-
-        if (!res.ok) throw new Error('Erro ao desativar');
-        await carregarUsuarios();
-      } catch (err) {
-        alert('Erro: ' + err.message);
-      }
-    }
-
-    async function reativar(id) {
-      if (!confirm("Deseja reativar este usuário?")) return;
-
-      try {
-        const res = await fetch(`${API_BASE}/api/usuarios/${id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ativo: true })
-        });
-
-        if (!res.ok) throw new Error('Erro ao reativar');
-        await carregarUsuarios();
-      } catch (err) {
-        alert('Erro: ' + err.message);
-      }
-    }
-
-    function editar(id, nome, email, ativo) {
+    function editar(id, nome, email, ativo){
       document.getElementById('id').value = id;
       document.getElementById('nome').value = nome;
       document.getElementById('email').value = email;
       document.getElementById('senha').value = '';
     }
 
-    form.addEventListener('submit', async (e) => {
+    async function excluir(id, nome, email){
+      if(!confirm("Deseja desativar este usuário?")) return;
+      try {
+        const res = await fetch(`${API_BASE}/api/usuarios/${id}`, {
+          method:'PUT',
+          headers:{ 'Content-Type':'application/json' },
+          body: JSON.stringify({ nome, email, ativo:false })
+        });
+        if(!res.ok) throw new Error('Erro ao desativar');
+        await carregarUsuarios();
+      } catch(err){ alert('Erro: '+err.message); }
+    }
+
+    async function reativar(id, nome, email){
+      if(!confirm("Deseja reativar este usuário?")) return;
+      try {
+        const res = await fetch(`${API_BASE}/api/usuarios/${id}`, {
+          method:'PUT',
+          headers:{ 'Content-Type':'application/json' },
+          body: JSON.stringify({ nome, email, ativo:true })
+        });
+        if(!res.ok) throw new Error('Erro ao reativar');
+        await carregarUsuarios();
+      } catch(err){ alert('Erro: '+err.message); }
+    }
+
+    form.addEventListener('submit', async e=>{
       e.preventDefault();
       const id = document.getElementById('id').value;
       const nome = document.getElementById('nome').value;
       const email = document.getElementById('email').value;
       const senha = document.getElementById('senha').value;
-
       const payload = { nome, email };
-      if (senha) payload.senha = senha;
+      if(senha) payload.senha = senha;
 
       try {
-        if (id) {
+        if(id){
           const res = await fetch(`${API_BASE}/api/usuarios/${id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            method:'PUT',
+            headers:{ 'Content-Type':'application/json' },
             body: JSON.stringify(payload)
           });
-          if (!res.ok) throw new Error('Erro ao atualizar');
+          if(!res.ok) throw new Error('Erro ao atualizar');
         } else {
-          const res = await fetch(`${API_BASE}/api/usuarios`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+          const res = await fetch(`${API_BASE}/api/cadastrar`, {
+            method:'POST',
+            headers:{ 'Content-Type':'application/json' },
             body: JSON.stringify(payload)
           });
-          if (!res.ok) throw new Error('Erro ao criar');
+          if(!res.ok) throw new Error('Erro ao criar');
         }
         form.reset();
         document.getElementById('id').value = '';
         await carregarUsuarios();
-      } catch (err) {
-        alert('Erro: ' + err.message);
-      }
+      } catch(err){ alert('Erro: '+err.message); }
     });
 
     carregarUsuarios();
