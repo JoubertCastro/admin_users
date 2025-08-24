@@ -121,9 +121,11 @@
           </div>
           <div class="actions">
             <button onclick="editar(${u.id}, '${u.nome}', '${u.email}', ${u.ativo})">Editar</button>
-            ${u.ativo
+            ${u.ativo == 1 || u.ativo === true
               ? `<button class="delete" onclick="excluir(${u.id})">Desativar</button>`
               : `<button onclick="reativar(${u.id})">Reativar</button>`
+            }
+
             }
           </div>
         `;
