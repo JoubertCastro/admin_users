@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <title>Painel de Administração</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      color: #333;
+    }
+
+    form {
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      max-width: 400px;
+      margin-bottom: 30px;
+    }
+
+    input, button {
+      display: block;
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 10px;
+      font-size: 16px;
+    }
+
+    button {
+      background: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    li {
+      background: #fff;
+      margin-bottom: 10px;
+      padding: 15px;
+      border-radius: 6px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .actions button {
+      margin-left: 10px;
+      background: #6c757d;
+    }
+
+    .actions button.delete {
+      background: #dc3545;
+    }
+
+    .actions button:hover {
+      opacity: 0.9;
+    }
+  </style>
+</head>
+<body>
+  <h1>Administração de Usuários</h1>
+
+  <form id="userForm">
+    <input type="hidden" id="id" />
+    <input type="text" id="nome" placeholder="Nome" required />
+    <input type="email" id="email" placeholder="Email" required />
+    <input type="password" id="senha" placeholder="Senha" required />
+    <button type="submit">Salvar</button>
+  </form>
+
+  <h2>Usuários Ativos</h2>
+  <ul id="listaUsuarios"></ul>
+
+  <script>
+    const API_BASE = "https://whatsapp-webhook-production-9a27.up.railway.app";
+    const form = document.getElementById('userForm');
+    const lista = document.getElementById('listaUsuarios');
+
+    async function carregarUsuarios() {
+      const res = await fetch(`${API_BASE}/api/usuarios`);
+      const usuarios = await res.json();
+      lista.innerHTML = '';
+      usuarios.forEach(u => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+          <span>${u.nome} (${u.email})</span>
+          <div class="actions">
+            <button onclick="editar(${u.id}, '${u.nome}', '${u.email}')">Editar</button>
+            <button class="delete" onclick="excluir(${u.id})">Excluir</button>
+          </div>
+        `;
+        lista.appendChild(li);
+      });
+    }
+
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('id').value;
+      const nome = document.getElementById('nome').value;
+      const email = document.getElementById('email').value;
+      const senha = document.getElementById('senha').value;
+
+      const metodo = id ? 'PUT' : 'POST';
+      const url = id ? `${API_BASE}/api/usuarios/${id}` : `${API_BASE}/api/cadastrar`;
+
+      const res = await fetch(url, {
+        method: metodo,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nome, email, senha })
+      });
+
+      const resultado = await res.json();
+      if (!resultado.ok) {
+        alert(resultado.erro || 'Erro ao salvar usuário');
+        return;
+      }
+
+      form.reset();
+      carregarUsuarios();
+    };
+
+    function editar(id, nome, email) {
+      document.getElementById('id').value = id;
+      document.getElementById('nome').value = nome;
+      document.getElementById('email').value = email;
+      document.getElementById('senha').value = '';
+    }
+
+    async function excluir(id) {
+      if (!confirm('Tem certeza que deseja excluir este usuário?')) return;
+      await fetch(`${API_BASE}/api/usuarios/${id}`, { method: 'DELETE' });
+      carregarUsuarios();
+    }
+
+    carregarUsuarios();
+  </script>
+</body>
+</html>
