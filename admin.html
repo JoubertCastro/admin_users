@@ -111,7 +111,7 @@
       usuarios.forEach(u => {
         const li = document.createElement('li');
         const criado = new Date(u.criado_em).toLocaleString('pt-BR');
-        const status = u.ativo ? '✅ Ativo' : '❌ Inativo';
+        const status = u.ativo == 1 || u.ativo === true ? '✅ Ativo' : '❌ Inativo';
 
         li.innerHTML = `
           <div>
