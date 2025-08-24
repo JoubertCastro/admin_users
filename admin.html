@@ -11,7 +11,7 @@
       padding: 20px;
     }
 
-    h1 {
+    h1, h2 {
       color: #333;
     }
 
@@ -58,6 +58,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      flex-wrap: wrap;
     }
 
     .actions button {
@@ -72,6 +73,10 @@
     .actions button:hover {
       opacity: 0.9;
     }
+
+    small {
+      color: #666;
+    }
   </style>
 </head>
 <body>
@@ -82,10 +87,15 @@
     <input type="text" id="nome" placeholder="Nome" required />
     <input type="email" id="email" placeholder="Email" required />
     <input type="password" id="senha" placeholder="Senha" required />
+    <!-- Checkbox para status ativo -->
+    <label>
+      <input type="checkbox" id="ativo" checked />
+      Usuário ativo
+    </label>
     <button type="submit">Salvar</button>
   </form>
 
-  <h2>Usuários Ativos</h2>
+  <h2>Usuários</h2>
   <ul id="listaUsuarios"></ul>
 
   <script>
@@ -97,13 +107,24 @@
       const res = await fetch(`${API_BASE}/api/usuarios`);
       const usuarios = await res.json();
       lista.innerHTML = '';
+
       usuarios.forEach(u => {
         const li = document.createElement('li');
+        const criado = new Date(u.criado_em).toLocaleString('pt-BR');
+        const status = u.ativo ? '✅ Ativo' : '❌ Inativo';
+
         li.innerHTML = `
-          <span>${u.nome} (${u.email})</span>
+          <div>
+            <strong>${u.nome}</strong> (${u.email})<br/>
+            <small>Criado em: ${criado}</small><br/>
+            <small>Status: ${status}</small>
+          </div>
           <div class="actions">
-            <button onclick="editar(${u.id}, '${u.nome}', '${u.email}')">Editar</button>
-            <button class="delete" onclick="excluir(${u.id})">Excluir</button>
+            <button onclick="editar(${u.id}, '${u.nome}', '${u.email}', ${u.ativo})">Editar</button>
+            ${u.ativo
+              ? `<button class="delete" onclick="excluir(${u.id})">Desativar</button>`
+              : `<button onclick="reativar(${u.id})">Reativar</button>`
+            }
           </div>
         `;
         lista.appendChild(li);
@@ -116,6 +137,7 @@
       const nome = document.getElementById('nome').value;
       const email = document.getElementById('email').value;
       const senha = document.getElementById('senha').value;
+      const ativo = document.getElementById('ativo').checked;
 
       const metodo = id ? 'PUT' : 'POST';
       const url = id ? `${API_BASE}/api/usuarios/${id}` : `${API_BASE}/api/cadastrar`;
@@ -123,7 +145,7 @@
       const res = await fetch(url, {
         method: metodo,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nome, email, senha })
+        body: JSON.stringify({ nome, email, senha, ativo })
       });
 
       const resultado = await res.json();
@@ -133,19 +155,33 @@
       }
 
       form.reset();
+      document.getElementById('ativo').checked = true;
+      document.getElementById('id').value = '';
       carregarUsuarios();
     };
 
-    function editar(id, nome, email) {
+    function editar(id, nome, email, ativo) {
       document.getElementById('id').value = id;
       document.getElementById('nome').value = nome;
       document.getElementById('email').value = email;
       document.getElementById('senha').value = '';
+      document.getElementById('ativo').checked = ativo;
     }
 
     async function excluir(id) {
-      if (!confirm('Tem certeza que deseja excluir este usuário?')) return;
+      if (!confirm('Desativar este usuário?')) return;
       await fetch(`${API_BASE}/api/usuarios/${id}`, { method: 'DELETE' });
+      carregarUsuarios();
+    }
+
+    async function reativar(id) {
+      const res = await fetch(`${API_BASE}/api/usuarios/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nome: 'temp', email: 'temp@temp.com', senha: 'temp', ativo: true
+        })
+      });
       carregarUsuarios();
     }
 
