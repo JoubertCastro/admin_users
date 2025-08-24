@@ -4,99 +4,178 @@
   <meta charset="UTF-8" />
   <title>Painel de Administração</title>
   <style>
+    :root {
+      --primary: #007bff;
+      --primary-dark: #0056b3;
+      --danger: #dc3545;
+      --gray: #6c757d;
+      --bg: #f4f6f8;
+      --card: #ffffff;
+      --text: #333;
+    }
+
     body {
       font-family: Arial, sans-serif;
-      background: #f4f6f8;
+      background: var(--bg);
       margin: 0;
-      padding: 20px;
+      padding: 30px;
     }
 
     h1, h2 {
-      color: #333;
+      color: var(--text);
+      margin-bottom: 15px;
     }
 
+    /* Container centralizado */
+    .container {
+      max-width: 900px;
+      margin: auto;
+    }
+
+    /* Formulário */
     form {
-      background: #fff;
+      background: var(--card);
       padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      max-width: 400px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
       margin-bottom: 30px;
     }
 
-    input, button {
+    form h2 {
+      margin-top: 0;
+      margin-bottom: 15px;
+    }
+
+    label {
+      font-size: 14px;
+      font-weight: bold;
       display: block;
+      margin-bottom: 5px;
+      color: #555;
+    }
+
+    input, button {
       width: 100%;
-      margin-bottom: 10px;
-      padding: 10px;
-      font-size: 16px;
+      margin-bottom: 15px;
+      padding: 12px;
+      font-size: 15px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    input:focus {
+      border-color: var(--primary);
+      outline: none;
+      box-shadow: 0 0 3px rgba(0,123,255,0.4);
     }
 
     button {
-      background: #007bff;
+      background: var(--primary);
       color: white;
       border: none;
       cursor: pointer;
       transition: background 0.3s;
+      font-weight: bold;
+      border-radius: 6px;
     }
 
     button:hover {
-      background: #0056b3;
+      background: var(--primary-dark);
     }
 
-    ul {
-      list-style: none;
-      padding: 0;
+    /* Lista de usuários */
+    .usuarios {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 15px;
     }
 
-    li {
-      background: #fff;
-      margin-bottom: 10px;
+    .usuario-card {
+      background: var(--card);
       padding: 15px;
-      border-radius: 6px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      border-radius: 8px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
       display: flex;
+      flex-direction: column;
       justify-content: space-between;
-      align-items: center;
+    }
+
+    .usuario-card strong {
+      font-size: 16px;
+      color: var(--text);
+    }
+
+    .usuario-card small {
+      color: #666;
+      display: block;
+      margin-top: 4px;
+    }
+
+    .status {
+      margin-top: 5px;
+      font-weight: bold;
+    }
+
+    .status.ativo {
+      color: green;
+    }
+
+    .status.inativo {
+      color: red;
+    }
+
+    .actions {
+      margin-top: 12px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
       flex-wrap: wrap;
     }
 
     .actions button {
-      margin-left: 10px;
-      background: #6c757d;
+      flex: 1;
+      padding: 8px;
+      font-size: 14px;
+      border-radius: 6px;
     }
 
-    .actions button.delete {
-      background: #dc3545;
+    .actions .edit {
+      background: var(--gray);
     }
 
-    .actions button:hover {
-      opacity: 0.9;
-    }
-
-    small {
-      color: #666;
+    .actions .delete {
+      background: var(--danger);
     }
   </style>
 </head>
 <body>
-  <h1>Administração de Usuários</h1>
+  <div class="container">
+    <h1>Administração de Usuários</h1>
 
-  <form id="userForm">
-    <input type="hidden" id="id" />
-    <input type="text" id="nome" placeholder="Nome" required />
-    <input type="email" id="email" placeholder="Email" required />
-    <input type="password" id="senha" placeholder="Senha" required />
-    <!-- Checkbox para status ativo -->
-    <label>
-      <input type="checkbox" id="ativo" checked />
-      Usuário ativo
-    </label>
-    <button type="submit">Salvar</button>
-  </form>
+    <form id="userForm">
+      <h2>Novo / Editar Usuário</h2>
+      <input type="hidden" id="id" />
 
-  <h2>Usuários</h2>
-  <ul id="listaUsuarios"></ul>
+      <label for="nome">Nome</label>
+      <input type="text" id="nome" placeholder="Nome completo" required />
+
+      <label for="email">Email</label>
+      <input type="email" id="email" placeholder="exemplo@email.com" required />
+
+      <label for="senha">Senha</label>
+      <input type="password" id="senha" placeholder="••••••••" required />
+
+      <label>
+        <input type="checkbox" id="ativo" checked />
+        Usuário ativo
+      </label>
+
+      <button type="submit">💾 Salvar Usuário</button>
+    </form>
+
+    <h2>Usuários Cadastrados</h2>
+    <div class="usuarios" id="listaUsuarios"></div>
+  </div>
 
   <script>
     const API_BASE = "https://whatsapp-webhook-production-9a27.up.railway.app";
@@ -109,25 +188,28 @@
       lista.innerHTML = '';
 
       usuarios.forEach(u => {
-        const li = document.createElement('li');
         const criado = new Date(u.criado_em).toLocaleString('pt-BR');
-        const status = u.ativo ? '✅ Ativo' : '❌ Inativo';
+        const statusClass = u.ativo ? 'ativo' : 'inativo';
+        const statusText = u.ativo ? '✅ Ativo' : '❌ Inativo';
 
-        li.innerHTML = `
+        const card = document.createElement('div');
+        card.className = 'usuario-card';
+        card.innerHTML = `
           <div>
-            <strong>${u.nome}</strong> (${u.email})<br/>
-            <small>Criado em: ${criado}</small><br/>
-            <small>Status: ${status}</small>
+            <strong>${u.nome}</strong>
+            <small>${u.email}</small>
+            <small>Criado em: ${criado}</small>
+            <div class="status ${statusClass}">${statusText}</div>
           </div>
           <div class="actions">
-            <button onclick="editar(${u.id}, '${u.nome}', '${u.email}', ${u.ativo})">Editar</button>
+            <button class="edit" onclick="editar(${u.id}, '${u.nome}', '${u.email}', ${u.ativo})">✏️ Editar</button>
             ${u.ativo
-              ? `<button class="delete" onclick="excluir(${u.id})">Desativar</button>`
-              : `<button onclick="reativar(${u.id})">Reativar</button>`
+              ? `<button class="delete" onclick="excluir(${u.id})">🚫 Desativar</button>`
+              : `<button onclick="reativar(${u.id})">✅ Reativar</button>`
             }
           </div>
         `;
-        lista.appendChild(li);
+        lista.appendChild(card);
       });
     }
 
@@ -166,6 +248,7 @@
       document.getElementById('email').value = email;
       document.getElementById('senha').value = '';
       document.getElementById('ativo').checked = ativo;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     async function excluir(id) {
@@ -175,7 +258,7 @@
     }
 
     async function reativar(id) {
-      const res = await fetch(`${API_BASE}/api/usuarios/${id}`, {
+      await fetch(`${API_BASE}/api/usuarios/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
